@@ -1,4 +1,4 @@
-# Celeste texture atlas shrinker
+# Celeste Texture Atlas Shrinker
 
 This tool shrinks the textures in the game Celeste. By default, the atlases are 4096x4096 which is too big for the Raspberry Pi 3 to handle. This tool extracts all textures from those atlases and uses Crunch to pack them into new, smaller textures (2048x2048). The textures within the atlases are not modified in any way. Not all textures in the game can be shrinked this way. The screens that appear at the end of each chapter uses big textures for the artwork, which this tool can't fix (yet).
 
@@ -21,3 +21,7 @@ This takes some time. Converted textures appear in the `output/` directory. Move
 Enjoy some low spec gaming!
 
 [Raspberry Pi 3 Celeste gameplay](https://youtu.be/iTBUNb6IKHo)
+
+## License
+
+MIT.
