@@ -1,5 +1,6 @@
 celestetextureshrinker
 crunch.bin
 output/
-input/
+input/*
+!input/.gitkeep
 extracted/
