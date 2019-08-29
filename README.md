@@ -4,7 +4,7 @@ This tool shrinks the textures in the game Celeste. By default, the atlases are 
 
 ## How to use
 
-Clone this repo recursively: `git clone --recursive <url>`
+Clone this repo recursively: `git clone --recursive https://github.com/daniel-j/celeste-textureshrinker.git`
 
 Install [nim](https://nim-lang.org/) from your package manager or with [choosenim](https://github.com/dom96/choosenim). Version 0.19.0 or higher is required. You also need to have g++ installed (to compile Crunch).
 
