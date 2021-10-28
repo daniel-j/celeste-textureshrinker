@@ -1,4 +1,3 @@
-
 import streams
 from stb_image/read as stbi import load
 from stb_image/write as stbiw import writePNG
@@ -172,6 +171,24 @@ proc testData(filename: string) =
 
   writePNG("atlas_test.png", texw, texh, format, atlas)
 
+proc getRGBA(r: var byte, g: var byte, b: var byte, a: var byte, pixels: seq[byte], channels: int, i: int) =
+  if channels == stbi.RGBA or channels == stbi.RGB:
+    r = pixels[i * channels + 0]
+    g = pixels[i * channels + 1]
+    b = pixels[i * channels + 2]
+    if channels != stbi.RGB:
+      a = pixels[i * channels + 3]
+    else:
+      a = uint8.high
+  elif channels == stbi.GreyAlpha:
+    r = pixels[i * channels + 0]
+    g = pixels[i * channels + 0]
+    b = pixels[i * channels + 0]
+    a = pixels[i * channels + 1]
+  else:
+    raise newException(Exception, "Unsupported color channel: " & $channels)
+
+
 proc convertPngToData(filename: string) =
   echo "Converting .png to .data ", filename
   let (dir, baseName, ext) = os.splitFile(filename)
@@ -193,61 +210,35 @@ proc convertPngToData(filename: string) =
   xnbstream.write(true)
 
   var rc, gc, bc, ac:byte
-  var runLength:byte = 0
+  var runLength:byte = 1
 
   var sanity = 0
   var pos = 0
 
-  for i in 0..<texw * texh:
-    var r, g, b, a:uint8
-    if channels == stbi.RGBA or channels == stbi.RGB:
-      r = pixels[i * channels + 0]
-      g = pixels[i * channels + 1]
-      b = pixels[i * channels + 2]
-      if channels != stbi.RGB:
-        a = pixels[i * channels + 3]
-      else:
-        a = uint8.high
-    elif channels == stbi.GreyAlpha:
-      r = pixels[i * channels + 0]
-      g = pixels[i * channels + 0]
-      b = pixels[i * channels + 0]
-      a = pixels[i * channels + 1]
-    else:
-      raise newException(Exception, "Unsupported color channel: " & $channels)
+  var size = texw * texh
 
-    if i == 0:
-      rc = r
-      gc = g
-      bc = b
-      ac = a
-      # echo "clear cache INIT!"
+  for i in 0..<size:
+    var r, g, b, a:byte
+    getRGBA(r, g, b, a, pixels, channels, i)
 
-    # echo "pixel ", i, " ", [r, g, b, a], " ", runLength
+    if i < size - 1:
+      getRGBA(rc, gc, bc, ac, pixels, channels, i + 1)
 
-    if rc == r and gc == g and bc == b and ac == a and runLength != runLength.high:
-      inc runLength
-      if i < texw * texh - 1:
+      if r == rc and g == gc and b == bc and a == ac and runLength != runLength.high:
+        inc runLength
         continue
 
-    # echo "WRITING ", [rc, gc, bc, ac], " count: ", runLength
     xnbstream.write(runLength)
-    xnbstream.write(ac)
-    if ac > byte 0:
-      xnbstream.write(bc)
-      xnbstream.write(gc)
-      xnbstream.write(rc)
+    xnbstream.write(a)
+    if a > byte 0:
+      xnbstream.write(b)
+      xnbstream.write(g)
+      xnbstream.write(r)
     inc sanity, int runLength
     runLength = 1
 
-    rc = r
-    gc = g
-    bc = b
-    ac = a
-    # echo "clearing cache!"
-
-  if sanity - (texw * texh) != 0:
-    raise newException(Exception, "Sanity: Number of pixels don't match: " & $sanity & " vs " & $(texw * texh))
+  if sanity != size:
+    raise newException(Exception, "Sanity: Number of pixels don't match: " & $sanity & " vs " & $size)
 
   xnbstream.close()
 
@@ -316,8 +307,9 @@ proc convertFromCrunch(originalMetaFile: string, binName: string) =
 
   echo "Created ", os.joinPath(dir, baseName & ".meta")
 
-
-let atlases = ["Journal", "Gui", "Checkpoints", "Gameplay"]
+# Currently not supported as it uses `--no-packing`
+# let atlases = ["Checkpoints"]
+let atlases = ["Journal", "Gui", "Gameplay"]
 
 for atlasName in atlases:
 
